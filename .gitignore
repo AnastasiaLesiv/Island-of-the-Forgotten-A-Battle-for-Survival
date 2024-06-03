@@ -1,0 +1,13 @@
+.attach_pid5690
+.collabignore
+.idea/
+.vscode/
+Assembly-CSharp-Editor.csproj
+Assembly-CSharp.csproj
+Library/
+Logs/
+Survival.sln
+Temp/
+UserSettings/
+obj/
+
