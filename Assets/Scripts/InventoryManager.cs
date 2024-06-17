@@ -1,84 +1,116 @@
 using System.Collections;
 using System.Collections.Generic;
+using UnityEditor.TestTools.CodeCoverage;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class InventoryManager : MonoBehaviour
 {
-    public GameObject UIPanel;
+    [FormerlySerializedAs("UIPanel")] public GameObject UIBG;
     public Transform inventoryPanel;
     public List<InventorySlot> slots = new List<InventorySlot>();
     public bool isOpened;
-    public float reachDistance = 2;
+    public float reachDistance = 3f;
     private Camera mainCamera;
-    
+
+    public MonoBehaviour playerScript;
     // Start is called before the first frame update
+    private void Awake()
+    {
+        UIBG.SetActive(true);
+    }
     void Start()
     {
         mainCamera = Camera.main;
+
+        // Перевірка і ініціалізація слотів
         for (int i = 0; i < inventoryPanel.childCount; i++)
         {
-            if (inventoryPanel.GetChild(i).GetComponent<InventorySlot>() != null)
+            var slot = inventoryPanel.GetChild(i).GetComponent<InventorySlot>();
+            if (slot != null)
             {
-                slots.Add(inventoryPanel.GetChild(i).GetComponent<InventorySlot>());
+                
+                slots.Add(slot);
             }
         }
-        UIPanel.SetActive(false);
+
+        UIBG.SetActive(false);
+        inventoryPanel.gameObject.SetActive(false);
     }
+
 
     // Update is called once per frame
     void Update()
     {
-        
         if (Input.GetKeyDown(KeyCode.I))
         {
             isOpened = !isOpened;
             if (isOpened)
             {
-                UIPanel.SetActive(true);
+                if (playerScript != null)
+                {
+                    playerScript.enabled = false;
+                }
+                UIBG.SetActive(true);
+                inventoryPanel.gameObject.SetActive(true);
             }
             else
             {
-                UIPanel.SetActive(false);
+                if (playerScript != null)
+                {
+                    playerScript.enabled = true;
+                }
+                UIBG.SetActive(false);
+                inventoryPanel.gameObject.SetActive(false);
             }
         }
-
         Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, reachDistance))
+
+        if (Input.GetKeyDown(KeyCode.E))
         {
-            Debug.DrawRay(ray.origin, ray.direction * reachDistance, Color.green);
-            if (hit.collider.gameObject.GetComponent<Item>() != null)
+            if(Physics.Raycast(ray, out hit, reachDistance))
             {
-                AddItem(hit.collider.gameObject.GetComponent<Item>().item, hit.collider.gameObject.GetComponent<Item>().amount);
-                Destroy(hit.collider.gameObject);
+                if (hit.collider.gameObject.GetComponent<Item>() != null)
+                {
+                    AddItem(hit.collider.gameObject.GetComponent<Item>().item,
+                    hit.collider.gameObject.GetComponent<Item>().amount);
+                    Destroy(hit.collider.gameObject);
+                }
             }
-            
-        }
-        else
-        {
-            Debug.DrawRay(ray.origin, ray.direction * reachDistance, Color.red);
         }
     }
-
     private void AddItem(ItemScriptableObject _item, int _amount)
     {
+
         foreach (InventorySlot slot in slots)
         {
-            if (slot.item = _item)
+            
+            if (slot.item == _item && !slot.isEmpty)
             {
-                slot.amount += -_amount;
-                return;
+                if ((slot.amount + _amount) <= _item.maximumAmount)
+                {
+                    slot.amount += _amount;
+                    slot.itemAmountText.text = slot.amount.ToString();
+                    return;
+                }
+
+                break;
             }
         }
 
         foreach (InventorySlot slot in slots)
         {
-            if (slot.isEmpty == false)
+            if (slot.isEmpty)
             {
                 slot.item = _item;
                 slot.amount = _amount;
+                slot.isEmpty = false;
+                slot.SetIcon(_item.icon);
+                slot.itemAmountText.text = _amount.ToString();
+                break;
             }
         }
     }
-    
+
 }

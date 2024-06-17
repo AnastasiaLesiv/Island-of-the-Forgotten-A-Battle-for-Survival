@@ -5,7 +5,6 @@ using UnityEngine.Serialization;
 
 public class Item : MonoBehaviour
 {
-    [FormerlySerializedAs("itemScriptableObject")] public ItemScriptableObject item;
-    public int amount;
-    
+   public ItemScriptableObject item;
+   public int amount;
 }
